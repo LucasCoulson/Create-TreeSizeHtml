@@ -6,8 +6,8 @@ function Create-TreeSizeHtml {
 	 Outputs the report to one or more interactive HTML files, and optionally zips them into a single zip file.	 
 	 Requires Powershell 2. For Windows 2003 servers, install http://support.microsoft.com/kb/968930	 
 	 Author: James Weakley (jameswillisweakley@gmail.com)
-     Modified By: Chris Taylor
-     Modified By: Lucas Coulson
+     	 Modified By: Chris Taylor
+     	 Modified By: Lucas Coulson
     
 	.DESCRIPTION
 	 
