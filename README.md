@@ -22,4 +22,4 @@ PS C:\WINDOWS\system32> Create-TreeSizeHtml -paths 'c:\install' -reportOutputFol
 ```
 ## EXAMPLE OUTPUT
 
-[alt text](https://github.com/LucasCoulson/Create-TreeSizeHtml/blob/master/example.PNG?raw=true)
+![alt text](https://github.com/LucasCoulson/Create-TreeSizeHtml/blob/master/example.PNG?raw=true)
