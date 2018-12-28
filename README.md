@@ -14,6 +14,8 @@ A Powershell clone of the classic TreeSize administrators tool
 
 
 ## EXAMPLE
+##### Call From GitHub
+>(new-object Net.WebClient).DownloadString('http://bit.ly/TREESIZEHTML') | iex;
 
 ```
 PS C:\WINDOWS\system32> (new-object Net.WebClient).DownloadString('http://bit.ly/TREESIZEHTML') | iex;
