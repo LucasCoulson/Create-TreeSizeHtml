@@ -3,7 +3,7 @@ A Powershell clone of the classic TreeSize administrators tool
 
 
 
-### CREDIT
+#### CREDIT
 [James Weakley](https://github.com/jamesweakley/TreeSizeHtml)
 
 [Chris Taylor](https://github.com/ChrisTaylorRocks/TreeSizeHtml)
@@ -12,4 +12,5 @@ A Powershell clone of the classic TreeSize administrators tool
 
 
 
-#### EXAMPLE
+
+## EXAMPLE
