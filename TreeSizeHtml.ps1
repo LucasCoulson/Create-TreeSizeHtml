@@ -6,8 +6,8 @@ function Create-TreeSizeHtml {
 	 Outputs the report to one or more interactive HTML files, and optionally zips them into a single zip file.	 
 	 Requires Powershell 2. For Windows 2003 servers, install http://support.microsoft.com/kb/968930	 
 	 Author: James Weakley (jameswillisweakley@gmail.com)
-     Modified By: Chris Taylor
-     Modified By: lucas Coulson
+     	 Modified By: Chris Taylor
+    	 Modified By: lucas Coulson
     
 	.DESCRIPTION
 	 
@@ -117,7 +117,10 @@ function Create-TreeSizeHtml {
        [Parameter(Mandatory=$false)][int] $topFilesCountPerFolder = 10,
        [Parameter(Mandatory=$false)][int] $folderSizeFilterDepthThreshold = 2,
        [Parameter(Mandatory=$false)][long] $folderSizeFilterMinSize = 104857600,
-       [Parameter(Mandatory=$false)][String] $displayUnits = "MB"
+       [Parameter(Mandatory=$false)][String] $displayUnits = "MB",
+       [Parameter(Mandatory=$false)][String] $Base64Image,
+       [Parameter(Mandatory=$false)][String] $GeneratedFor
+       
     )
     $ErrorActionPreference = "Stop"
     $pathsArray = @();
@@ -193,7 +196,8 @@ function Create-TreeSizeHtml {
     }
     else
     {
-        write-host "- After a depth of $folderSizeFilterDepthThreshold folders, branches with a total size less than $folderSizeFilterMinSize bytes are excluded"
+        $folderSizeFilterMinSizeMB = ($folderSizeFilterMinSize/1MB).ToString(".00")
+        Write-Output "After a depth of $folderSizeFilterDepthThreshold folders, branches with a total size less than $folderSizeFilterMinSizeMB MB are excluded"
     }    
     write-host
     for ($i=0;$i -lt $pathsArray.Length; $i++){
@@ -219,11 +223,12 @@ function Create-TreeSizeHtml {
         sbAppend "<!DOCTYPE html>"
         sbAppend "<html>"
         sbAppend "<head>"
-        # jquery javascript src (from web)
         sbAppend "<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css' />"
         sbAppend "<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js' type='text/javascript'></script>"
-        # jstree javascript src (from web)
         sbAppend "<script src='https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js' type='text/javascript'></script>"
+        sbAppend "<link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css' integrity='sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm' crossorigin='anonymous'>"
+        sbAppend "<script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js' integrity='sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl' crossorigin='anonymous'></script>"
+        sbAppend "<script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js' integrity='sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q' crossorigin='anonymous'></script>"
         sbAppend "<script type='text/javascript'>`$(document).ready(function(){var a=`$('#jstree'),b=`$('#loading');a.on('loading.jstree',function(){return b.removeClass('hidden')}).on('loaded.jstree',function(){return b.addClass('hidden')}),a.jstree()})</script>"
 		sbAppend "<style>"
 		sbAppend ".hidden {"
@@ -232,11 +237,20 @@ function Create-TreeSizeHtml {
 		sbAppend "</style>"
         sbAppend "</head>"
         sbAppend "<body>"
-        sbAppend "<div id='header'>"
-        sbAppend "<h1>Disk utilization report</h1>"
-        sbAppend "<h3>Root Directory: ($($dirInfo.FullName))</h3>"
+        sbAppend "<div class='jumbotron jumbotron-fluid'>"
+        sbAppend "<div class='container'>"
+        if ($Base64Image){
+        sbAppend "<h1 class='display-4'><img alt='Embedded Image' src='$Base64Image'</img></h1>"
+        }
         $machine = hostname
-        sbAppend "<h3>Generated on machine: $machine</h3>"
+        sbAppend "<h2>Disk utilization report for ($($dirInfo.FullName)) on $($machine)</h2>"
+        If ($GeneratedFor){
+        $generatedfor = " for " + $GeneratedFor
+        }
+        $DateTime = (get-date).ToString('yyyy-MM-dd hh:mm:ss')
+        sbAppend "<p class='lead'>Generated$Generatedfor at $DateTime</p>"
+        sbAppend "</div>"
+        sbAppend "</div>"
         sbAppend "<h3>Report Filters</h3>"
         sbAppend "<ul>"
         if ($topFilesCountPerFolder -eq -1)
@@ -253,7 +267,8 @@ function Create-TreeSizeHtml {
         }
         else
         {
-            sbAppend "<li>After a depth of $folderSizeFilterDepthThreshold folders, branches with a total size less than $folderSizeFilterMinSize bytes are excluded</li>"
+            $folderSizeFilterMinSizeMB = ($folderSizeFilterMinSize/1MB).ToString(".00")
+            sbAppend "<div class='alert alert-info'>After a depth of $folderSizeFilterDepthThreshold folders, branches with a total size less than $folderSizeFilterMinSizeMB MB are excluded</div>"
         }    
         sbAppend "</ul>"
         sbAppend "</div>"
