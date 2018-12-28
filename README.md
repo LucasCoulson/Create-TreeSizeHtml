@@ -22,4 +22,6 @@ PS C:\WINDOWS\system32> Create-TreeSizeHtml -paths 'c:\install' -reportOutputFol
 ```
 ## EXAMPLE OUTPUT
 
+##### Logo optional. Encode logo here [HERE](https://www.base64-image.de/)
+
 ![alt text](https://github.com/LucasCoulson/Create-TreeSizeHtml/blob/master/example.PNG?raw=true)
