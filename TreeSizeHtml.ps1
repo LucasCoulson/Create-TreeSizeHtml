@@ -6,8 +6,8 @@ function Create-TreeSizeHtml {
 	 Outputs the report to one or more interactive HTML files, and optionally zips them into a single zip file.	 
 	 Requires Powershell 2. For Windows 2003 servers, install http://support.microsoft.com/kb/968930	 
 	 Author: James Weakley (jameswillisweakley@gmail.com)
-     	 Modified By: Chris Taylor
-    	 Modified By: lucas Coulson
+     Modified By: Chris Taylor
+     Modified By: Lucas Coulson
     
 	.DESCRIPTION
 	 
@@ -165,41 +165,39 @@ function Create-TreeSizeHtml {
     {
         $zipOutputFilename = ($reportOutputFolderInfo.FullName)+$zipOutputFilename
     }
-    write-host "Report Parameters"
-    write-host "-----------------"
-    write-host "Locations to include:"
+    Write-Output "Report Parameters"
+    Write-Output "-----------------"
+    Write-Output "Locations to include:"
     for ($i=0;$i -lt $pathsArray.Length;$i++)
     {
-        write-host "- $($pathsArray[$i]) to $($htmlFilenamesArray[$i])"        
+        Write-Output "- $($pathsArray[$i]) to $($htmlFilenamesArray[$i])"        
     }
     if ($zipOutputFilename -eq $null -or $zipOutputFilename -eq '')
     {
-        write-host "Skipping zip file creation"
+        Write-Output "Skipping zip file creation"
     }
     else
     {
-        write-host "Report HTML files to be zipped to $zipOutputFilename"
+        Write-Output "Report HTML files to be zipped to $zipOutputFilename"
     }
-    write-host
-    write-host "Filters:"
+    Write-Output "Filters:"
     if ($topFilesCountPerFolder -eq -1)
     {
-        write-host "- Display all files"
+        Write-Output "- Display all files"
     }
     else
     {
-        write-host "- Displaying largest $topFilesCountPerFolder files per folder"
+        Write-Output "- Displaying largest $topFilesCountPerFolder files per folder"
     }
     if ($folderSizeFilterDepthThreshold -eq -1)
     {
-        write-host "- Displaying entire folder structure"
+        Write-Output "- Displaying entire folder structure"
     }
     else
     {
         $folderSizeFilterMinSizeMB = ($folderSizeFilterMinSize/1MB).ToString(".00")
         Write-Output "After a depth of $folderSizeFilterDepthThreshold folders, branches with a total size less than $folderSizeFilterMinSizeMB MB are excluded"
     }    
-    write-host
     for ($i=0;$i -lt $pathsArray.Length; $i++){
         $_ = $pathsArray[$i];
         # get the Directory info for the root directory
@@ -209,12 +207,12 @@ function Create-TreeSizeHtml {
         {
             Throw "Path $dirInfo does not exist"
         }
-        write-host "Building object tree for path $_"
+        Write-Output "Building object tree for path $_"
         # traverse the folder structure and build an in-memory tree of objects
         $treeStructureObj = @{}
         buildDirectoryTree_Recursive $treeStructureObj $_
         $treeStructureObj.Name = $dirInfo.FullName; #.replace("\","\\");
-        write-host "Building HTML output"
+        Write-Output "Building HTML output"
         # initialise a StringBuffer. The HTML will be written to here
         $sb = New-Object -TypeName "System.Text.StringBuilder";
         # output the HTML and javascript for the report page to the StringBuffer
@@ -255,21 +253,21 @@ function Create-TreeSizeHtml {
         sbAppend "<ul>"
         if ($topFilesCountPerFolder -eq -1)
         {
-            sbAppend "<li>Displaying all files</li>"
+            sbAppend "<div class='alert alert-info'>Displaying all files</div>"
         }
         else
         {
-            sbAppend "<li>Displaying largest $topFilesCountPerFolder files per folder</li>"
+            sbAppend "<div class='alert alert-info'>Displaying largest $topFilesCountPerFolder files per folder</div>"
         }
         if ($folderSizeFilterDepthThreshold -eq -1)
         {
-            sbAppend "<li>Displaying entire folder structure</li>"
+            sbAppend "<div class='alert alert-info'>Displaying entire folder structure</div>"
         }
         else
         {
             $folderSizeFilterMinSizeMB = ($folderSizeFilterMinSize/1MB).ToString(".00")
             sbAppend "<div class='alert alert-info'>After a depth of $folderSizeFilterDepthThreshold folders, branches with a total size less than $folderSizeFilterMinSizeMB MB are excluded</div>"
-        }    
+        }
         sbAppend "</ul>"
         sbAppend "</div>"
         sbAppend "<div id='error'></div>"
@@ -291,13 +289,17 @@ function Create-TreeSizeHtml {
         sbAppend "</body>"
         sbAppend "</html>"
         # finally, output the contents of the StringBuffer to the filesystem
+        if (!($htmlFilenamesArray[$i].EndsWith(".html")))
+        {
+        $htmlFilenamesArray[$i] = $htmlFilenamesArray[$i] + ".html"
+        }
         $outputFileName = $htmlFilenamesArray[$i]
-        write-host "Writing HTML to file $outputFileName"
+        Write-Output "Writing HTML to file $outputFileName"
         Out-file -InputObject $sb.ToString() $outputFileName -encoding "UTF8"
     }
     if ($zipOutputFilename -eq $null -or $zipOutputFilename -eq '')
     {
-        write-host "Skipping zip file creation"
+        Write-Output "Skipping zip file creation"
     }
     else
     {
@@ -305,7 +307,7 @@ function Create-TreeSizeHtml {
     	set-content $zipOutputFilename ("PK" + [char]5 + [char]6 + ("$([char]0)" * 18))
     	(dir $zipOutputFilename).IsReadOnly = $false
         for ($i=0;$i -lt $htmlFilenamesArray.Length; $i++){
-            write-host "Copying $($htmlFilenamesArray[$i]) to zip file $zipOutputFilename"
+            Write-Output "Copying $($htmlFilenamesArray[$i]) to zip file $zipOutputFilename"
             $shellApplication = new-object -com shell.application
         	$zipPackage = $shellApplication.NameSpace($zipOutputFilename)
         	$zipPackage.CopyHere($htmlFilenamesArray[$i])
@@ -317,7 +319,7 @@ function Create-TreeSizeHtml {
             while($zipPackage.Items().Item($fileInfo.Name) -Eq $null)
             {
                 start-sleep -seconds 1
-                write-host "." -nonewline
+                Write-Output "." -nonewline
             }
         }
         $inheritance = get-acl $zipOutputFilename
@@ -349,11 +351,11 @@ function buildDirectoryTree_Recursive {
     # if the current directory length is too long, try to work around the feeble Windows size limit by using the subst command
     if ($currentDirInfo.Length -gt 248)
     {
-        Write-Host "$currentDirInfo has a length of $($currentDirInfo.Length), greater than the maximum 248, invoking workaround"
+        Write-Output "$currentDirInfo has a length of $($currentDirInfo.Length), greater than the maximum 248, invoking workaround"
         $substDriveLetter = ls function:[d-z]: -n | ?{ !(test-path $_) } | select -First 1
         $parentFolder = ($currentDirInfo.Substring(0,$currentDirInfo.LastIndexOf("\")))
         $relative = $substDriveLetter+($currentDirInfo.Substring($currentDirInfo.LastIndexOf("\")))
-        write-host "Mapping $substDriveLetter to $parentFolder for access via $relative"
+        Write-Output "Mapping $substDriveLetter to $parentFolder for access via $relative"
         subst $substDriveLetter $parentFolder
 
         $dirInfo = New-Object System.IO.DirectoryInfo $relative
@@ -377,7 +379,7 @@ function buildDirectoryTree_Recursive {
         # remove any drive mappings created via subst above
         if (!($substDriveLetter -eq $null))
         {
-            write-host "removing substitute drive $substDriveLetter"
+            Write-Output "removing substitute drive $substDriveLetter"
             subst $substDriveLetter /D
             $substDriveLetter = $null
         }
@@ -417,7 +419,7 @@ function buildDirectoryTree_Recursive {
         }
         else
         {
-            Write-Host $_.Exception.ToString()
+            Write-Output $_.Exception.ToString()
         }
     }
 }
