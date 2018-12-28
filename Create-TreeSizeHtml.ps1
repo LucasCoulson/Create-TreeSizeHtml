@@ -1,5 +1,5 @@
 function Create-TreeSizeHtml { 
-	<#
+    <#
 	.SYNOPSIS
 
 	 A Powershell clone of the classic TreeSize administrators tool. Works on local volumes or network shares.
@@ -110,101 +110,81 @@ function Create-TreeSizeHtml {
 
 	#>
     param (
-       [Parameter(Mandatory=$true)][String] $paths,
-       [Parameter(Mandatory=$true)][String] $reportOutputFolder,
-       [Parameter(Mandatory=$false)][String] $htmlOutputFilenames = $null,
-       [Parameter(Mandatory=$false)][String] $zipOutputFilename = $null,
-       [Parameter(Mandatory=$false)][int] $topFilesCountPerFolder = 10,
-       [Parameter(Mandatory=$false)][int] $folderSizeFilterDepthThreshold = 2,
-       [Parameter(Mandatory=$false)][long] $folderSizeFilterMinSize = 104857600,
-       [Parameter(Mandatory=$false)][String] $displayUnits = "MB",
-       [Parameter(Mandatory=$false)][String] $Base64Image,
-       [Parameter(Mandatory=$false)][String] $GeneratedFor
+        [Parameter(Mandatory = $true)][String] $paths,
+        [Parameter(Mandatory = $true)][String] $reportOutputFolder,
+        [Parameter(Mandatory = $false)][String] $htmlOutputFilenames = $null,
+        [Parameter(Mandatory = $false)][String] $zipOutputFilename = $null,
+        [Parameter(Mandatory = $false)][int] $topFilesCountPerFolder = 10,
+        [Parameter(Mandatory = $false)][int] $folderSizeFilterDepthThreshold = 2,
+        [Parameter(Mandatory = $false)][long] $folderSizeFilterMinSize = 104857600,
+        [Parameter(Mandatory = $false)][String] $displayUnits = "MB",
+        [Parameter(Mandatory = $false)][String] $Base64Image,
+        [Parameter(Mandatory = $false)][String] $GeneratedFor
        
     )
     $ErrorActionPreference = "Stop"
     $pathsArray = @();
     $htmlFilenamesArray = @();
     # check output folder exists create if not
-    if (!($reportOutputFolder.EndsWith("\")))
-    {
+    if (!($reportOutputFolder.EndsWith("\"))) {
         $reportOutputFolder = $reportOutputFolder + "\"
     }
     $reportOutputFolderInfo = New-Object System.IO.DirectoryInfo $reportOutputFolder
-    if (!$reportOutputFolderInfo.Exists)
-    {
+    if (!$reportOutputFolderInfo.Exists) {
         [system.io.directory]::CreateDirectory($reportOutputFolder)
     }
     # passing in "ALL" means that all fixed disks are to be included in the report
-    if ($paths -eq "ALL")
-    {
+    if ($paths -eq "ALL") {
         Get-WmiObject win32_logicaldisk -filter "drivetype = 3" | % {
-            $pathsArray += $_.DeviceID+"\"
-            $htmlFilenamesArray += $_.DeviceID.replace(":","_Drive.html");
+            $pathsArray += $_.DeviceID + "\"
+            $htmlFilenamesArray += $_.DeviceID.replace(":", "_Drive.html");
         }
-    }
-    else
-    {
-        if ($htmlOutputFilenames -eq $null -or $htmlOutputFilenames -eq '')
-        {
+    } else {
+        if ($htmlOutputFilenames -eq $null -or $htmlOutputFilenames -eq '') {
             throw "paths was not 'ALL', but htmlOutputFilenames was not defined. If paths are defined, then the same number of htmlOutputFileNames must be specified."
         }
         # split up the paths and htmlOutputFilenames parameters by comma
         $pathsArray = $paths.split(",");
         $htmlFilenamesArray = $htmlOutputFilenames.split(",");
-        if (!($pathsArray.Length -eq $htmlFilenamesArray.Length))
-        {
+        if (!($pathsArray.Length -eq $htmlFilenamesArray.Length)) {
             Throw "$($pathsArray.Length) paths were specified but $($htmlFilenamesArray.Length) htmlOutputFilenames. The number of HTML output filenames must be the same as the number of paths specified"
         }
     }
-    for ($i=0;$i -lt $htmlFilenamesArray.Length; $i++)
-    {
-        $htmlFilenamesArray[$i] = ($reportOutputFolderInfo.FullName)+$htmlFilenamesArray[$i]
+    for ($i = 0; $i -lt $htmlFilenamesArray.Length; $i++) {
+        $htmlFilenamesArray[$i] = ($reportOutputFolderInfo.FullName) + $htmlFilenamesArray[$i]
     }
-    if (!($zipOutputFilename -eq $null -or $zipOutputFilename -eq ''))
-    {
-        $zipOutputFilename = ($reportOutputFolderInfo.FullName)+$zipOutputFilename
+    if (!($zipOutputFilename -eq $null -or $zipOutputFilename -eq '')) {
+        $zipOutputFilename = ($reportOutputFolderInfo.FullName) + $zipOutputFilename
     }
     Write-Output "Report Parameters"
     Write-Output "-----------------"
     Write-Output "Locations to include:"
-    for ($i=0;$i -lt $pathsArray.Length;$i++)
-    {
+    for ($i = 0; $i -lt $pathsArray.Length; $i++) {
         Write-Output "- $($pathsArray[$i]) to $($htmlFilenamesArray[$i])"        
     }
-    if ($zipOutputFilename -eq $null -or $zipOutputFilename -eq '')
-    {
+    if ($zipOutputFilename -eq $null -or $zipOutputFilename -eq '') {
         Write-Output "Skipping zip file creation"
-    }
-    else
-    {
+    } else {
         Write-Output "Report HTML files to be zipped to $zipOutputFilename"
     }
     Write-Output "Filters:"
-    if ($topFilesCountPerFolder -eq -1)
-    {
+    if ($topFilesCountPerFolder -eq -1) {
         Write-Output "- Display all files"
-    }
-    else
-    {
+    } else {
         Write-Output "- Displaying largest $topFilesCountPerFolder files per folder"
     }
-    if ($folderSizeFilterDepthThreshold -eq -1)
-    {
+    if ($folderSizeFilterDepthThreshold -eq -1) {
         Write-Output "- Displaying entire folder structure"
-    }
-    else
-    {
-        $folderSizeFilterMinSizeMB = ($folderSizeFilterMinSize/1MB).ToString(".00")
+    } else {
+        $folderSizeFilterMinSizeMB = ($folderSizeFilterMinSize / 1MB).ToString(".00")
         Write-Output "After a depth of $folderSizeFilterDepthThreshold folders, branches with a total size less than $folderSizeFilterMinSizeMB MB are excluded"
     }    
-    for ($i=0;$i -lt $pathsArray.Length; $i++){
+    for ($i = 0; $i -lt $pathsArray.Length; $i++) {
         $_ = $pathsArray[$i];
         # get the Directory info for the root directory
         $dirInfo = New-Object System.IO.DirectoryInfo $_
         # test that it exists, throw error if it doesn't
-        if (!$dirInfo.Exists)
-        {
+        if (!$dirInfo.Exists) {
             Throw "Path $dirInfo does not exist"
         }
         Write-Output "Building object tree for path $_"
@@ -228,22 +208,22 @@ function Create-TreeSizeHtml {
         sbAppend "<script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js' integrity='sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl' crossorigin='anonymous'></script>"
         sbAppend "<script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js' integrity='sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q' crossorigin='anonymous'></script>"
         sbAppend "<script type='text/javascript'>`$(document).ready(function(){var a=`$('#jstree'),b=`$('#loading');a.on('loading.jstree',function(){return b.removeClass('hidden')}).on('loaded.jstree',function(){return b.addClass('hidden')}),a.jstree()})</script>"
-		sbAppend "<style>"
-		sbAppend ".hidden {"
-		sbAppend "  visibility: hidden;"
-		sbAppend "}"
-		sbAppend "</style>"
+        sbAppend "<style>"
+        sbAppend ".hidden {"
+        sbAppend "  visibility: hidden;"
+        sbAppend "}"
+        sbAppend "</style>"
         sbAppend "</head>"
         sbAppend "<body>"
         sbAppend "<div class='jumbotron jumbotron-fluid'>"
         sbAppend "<div class='container'>"
-        if ($Base64Image){
-        sbAppend "<h1 class='display-4'><img alt='Embedded Image' src='$Base64Image'</img></h1>"
+        if ($Base64Image) {
+            sbAppend "<h1 class='display-4'><img alt='Embedded Image' src='$Base64Image'</img></h1>"
         }
         $machine = hostname
         sbAppend "<h2>Disk utilization report for ($($dirInfo.FullName)) on $($machine)</h2>"
-        If ($GeneratedFor){
-        $generatedfor = " for " + $GeneratedFor
+        If ($GeneratedFor) {
+            $generatedfor = " for " + $GeneratedFor
         }
         $DateTime = (get-date).ToString('yyyy-MM-dd hh:mm:ss')
         sbAppend "<p class='lead'>Generated$Generatedfor at $DateTime</p>"
@@ -251,32 +231,26 @@ function Create-TreeSizeHtml {
         sbAppend "</div>"
         sbAppend "<h3>Report Filters</h3>"
         sbAppend "<ul>"
-        if ($topFilesCountPerFolder -eq -1)
-        {
+        if ($topFilesCountPerFolder -eq -1) {
             sbAppend "<div class='alert alert-info'>Displaying all files</div>"
-        }
-        else
-        {
+        } else {
             sbAppend "<div class='alert alert-info'>Displaying largest $topFilesCountPerFolder files per folder</div>"
         }
-        if ($folderSizeFilterDepthThreshold -eq -1)
-        {
+        if ($folderSizeFilterDepthThreshold -eq -1) {
             sbAppend "<div class='alert alert-info'>Displaying entire folder structure</div>"
-        }
-        else
-        {
-            $folderSizeFilterMinSizeMB = ($folderSizeFilterMinSize/1MB).ToString(".00")
+        } else {
+            $folderSizeFilterMinSizeMB = ($folderSizeFilterMinSize / 1MB).ToString(".00")
             sbAppend "<div class='alert alert-info'>After a depth of $folderSizeFilterDepthThreshold folders, branches with a total size less than $folderSizeFilterMinSizeMB MB are excluded</div>"
         }
         sbAppend "</ul>"
         sbAppend "</div>"
         sbAppend "<div id='error'></div>"
-		# include a loading message and spinny icon while jsTree initialises
+        # include a loading message and spinny icon while jsTree initialises
         sbAppend "<div id='loading'>Loading...<img src='https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.3/themes/default/throbber.gif'/></div>"
         sbAppend "<div id='jstree'>"
         sbAppend "<ul id='tree'>"
         $size = bytesFormatter $treeStructureObj.SizeBytes $displayUnits
-        $name = $treeStructureObj.Name.replace("'","\'")        
+        $name = $treeStructureObj.Name.replace("'", "\'")        
         # output the name and total size of the root folder
         sbAppend "   <li><span class='folder'>$name ($size)</span>"
         sbAppend "     <ul>"
@@ -289,41 +263,36 @@ function Create-TreeSizeHtml {
         sbAppend "</body>"
         sbAppend "</html>"
         # finally, output the contents of the StringBuffer to the filesystem
-        if (!($htmlFilenamesArray[$i].EndsWith(".html")))
-        {
-        $htmlFilenamesArray[$i] = $htmlFilenamesArray[$i] + ".html"
+        if (!($htmlFilenamesArray[$i].EndsWith(".html"))) {
+            $htmlFilenamesArray[$i] = $htmlFilenamesArray[$i] + ".html"
         }
         $outputFileName = $htmlFilenamesArray[$i]
         Write-Output "Writing HTML to file $outputFileName"
         Out-file -InputObject $sb.ToString() $outputFileName -encoding "UTF8"
     }
-    if ($zipOutputFilename -eq $null -or $zipOutputFilename -eq '')
-    {
+    if ($zipOutputFilename -eq $null -or $zipOutputFilename -eq '') {
         Write-Output "Skipping zip file creation"
-    }
-    else
-    {
+    } else {
         # create zip file
-    	set-content $zipOutputFilename ("PK" + [char]5 + [char]6 + ("$([char]0)" * 18))
-    	(dir $zipOutputFilename).IsReadOnly = $false
-        for ($i=0;$i -lt $htmlFilenamesArray.Length; $i++){
+        set-content $zipOutputFilename ("PK" + [char]5 + [char]6 + ("$([char]0)" * 18))
+        (dir $zipOutputFilename).IsReadOnly = $false
+        for ($i = 0; $i -lt $htmlFilenamesArray.Length; $i++) {
             Write-Output "Copying $($htmlFilenamesArray[$i]) to zip file $zipOutputFilename"
             $shellApplication = new-object -com shell.application
-        	$zipPackage = $shellApplication.NameSpace($zipOutputFilename)
-        	$zipPackage.CopyHere($htmlFilenamesArray[$i])
+            $zipPackage = $shellApplication.NameSpace($zipOutputFilename)
+            $zipPackage.CopyHere($htmlFilenamesArray[$i])
             # the zip is asynchronous, so we have to wait and keep checking (ugly)
             # use a DirectoryInfo object to retrieve just the file name within the path, 
             # this is what we check for every second
             $fileInfo = New-Object System.IO.DirectoryInfo $htmlFilenamesArray[$i]
             $size = $zipPackage.Items().Item($fileInfo.Name).Size
-            while($zipPackage.Items().Item($fileInfo.Name) -Eq $null)
-            {
+            while ($zipPackage.Items().Item($fileInfo.Name) -Eq $null) {
                 start-sleep -seconds 1
                 Write-Output "." -nonewline
             }
         }
         $inheritance = get-acl $zipOutputFilename
-        $inheritance.SetAccessRuleProtection($false,$false)
+        $inheritance.SetAccessRuleProtection($false, $false)
         set-acl $zipOutputFilename -AclObject $inheritance
     }
 } 
@@ -342,27 +311,24 @@ function Create-TreeSizeHtml {
 #
 # The path to the current folder in the tree
 function buildDirectoryTree_Recursive {  
-        param (  
-            [Parameter(Mandatory=$true)][Object] $currentParentDirInfo,  
-            [Parameter(Mandatory=$true)][String] $currentDirInfo 
-        )  
+    param (  
+        [Parameter(Mandatory = $true)][Object] $currentParentDirInfo,  
+        [Parameter(Mandatory = $true)][String] $currentDirInfo 
+    )  
     $substDriveLetter = $null
     
     # if the current directory length is too long, try to work around the feeble Windows size limit by using the subst command
-    if ($currentDirInfo.Length -gt 248)
-    {
+    if ($currentDirInfo.Length -gt 248) {
         Write-Output "$currentDirInfo has a length of $($currentDirInfo.Length), greater than the maximum 248, invoking workaround"
-        $substDriveLetter = ls function:[d-z]: -n | ?{ !(test-path $_) } | select -First 1
-        $parentFolder = ($currentDirInfo.Substring(0,$currentDirInfo.LastIndexOf("\")))
-        $relative = $substDriveLetter+($currentDirInfo.Substring($currentDirInfo.LastIndexOf("\")))
+        $substDriveLetter = ls function:[d-z]: -n | ? { !(test-path $_) } | select -First 1
+        $parentFolder = ($currentDirInfo.Substring(0, $currentDirInfo.LastIndexOf("\")))
+        $relative = $substDriveLetter + ($currentDirInfo.Substring($currentDirInfo.LastIndexOf("\")))
         Write-Output "Mapping $substDriveLetter to $parentFolder for access via $relative"
         subst $substDriveLetter $parentFolder
 
         $dirInfo = New-Object System.IO.DirectoryInfo $relative
 
-    }
-    else
-    {
+    } else {
         $dirInfo = New-Object System.IO.DirectoryInfo $currentDirInfo 
     }
     # add its details to the currentParentDirInfo object
@@ -372,13 +338,11 @@ function buildDirectoryTree_Recursive {
     $currentParentDirInfo.Name = $dirInfo.Name;
     $currentParentDirInfo.Type = "Folder";
     # iterate all subdirectories
-    try
-    {
+    try {
         $dirs = $dirInfo.GetDirectories() | where {!$_.Attributes.ToString().Contains("ReparsePoint")}; #don't include reparse points
         $files = $dirInfo.GetFiles();
         # remove any drive mappings created via subst above
-        if (!($substDriveLetter -eq $null))
-        {
+        if (!($substDriveLetter -eq $null)) {
             Write-Output "removing substitute drive $substDriveLetter"
             subst $substDriveLetter /D
             $substDriveLetter = $null
@@ -386,8 +350,7 @@ function buildDirectoryTree_Recursive {
         $dirs | % { 
             # create a new object for the subfolder to pass in
             $subFolder = @{}
-            if ($_.Name.length -lt 1)
-            {
+            if ($_.Name.length -lt 1) {
                 return;
             }
             # call this function in the subfolder. It will return after the entire branch from here down is traversed
@@ -396,7 +359,7 @@ function buildDirectoryTree_Recursive {
             $currentParentDirInfo.Folders += $subFolder;
             # the total size consumed from the subfolder down is now available. 
             # Add it to the running total for the current folder
-            $currentParentDirInfo.SizeBytes= $currentParentDirInfo.SizeBytes + $subFolder.SizeBytes;
+            $currentParentDirInfo.SizeBytes = $currentParentDirInfo.SizeBytes + $subFolder.SizeBytes;
         }
         # iterate all files
         $files | % { 
@@ -408,23 +371,18 @@ function buildDirectoryTree_Recursive {
             # add the file object to the list of files at this level
             $currentParentDirInfo.Files += $htmlFileObj;
             # add the file's size to the running total for the current folder
-            $currentParentDirInfo.SizeBytes= $currentParentDirInfo.SizeBytes + $_.Length
+            $currentParentDirInfo.SizeBytes = $currentParentDirInfo.SizeBytes + $_.Length
         }
-    }
-    catch [Exception]
-    {
-        if ($_.Exception.Message.StartsWith('Access to the path'))
-        {
+    } catch [Exception] {
+        if ($_.Exception.Message.StartsWith('Access to the path')) {
             $currentParentDirInfo.Name = $currentParentDirInfo.Name + " (Access Denied to this location)"
-        }
-        else
-        {
+        } else {
             Write-Output $_.Exception.ToString()
         }
     }
 }
-function bytesFormatter{
-	<#
+function bytesFormatter {
+    <#
 	.SYNOPSIS
 
 	 Used internally by the TreeSizeHtml function. 
@@ -436,61 +394,55 @@ function bytesFormatter{
 	 bytesFormatter -bytes 102534233454 -notation "MB"
 	 returns "97,784 MB"
 	#>
-	param (
-        [Parameter(Mandatory=$true)][decimal][AllowNull()] $bytes,
-        [Parameter(Mandatory=$true)][String] $notation
+    param (
+        [Parameter(Mandatory = $true)][decimal][AllowNull()] $bytes,
+        [Parameter(Mandatory = $true)][String] $notation
     )
-    if ($bytes -eq $null)
-    {
+    if ($bytes -eq $null) {
         return "unknown size";
     }
     $notation = $notation.ToUpper();
-    if ($notation -eq 'B')
-    {
-        return ($bytes.ToString())+" B";
+    if ($notation -eq 'B') {
+        return ($bytes.ToString()) + " B";
     }
-    if ($notation -eq 'KB')
-    {
-        return (roundOffAndAddCommas($bytes/1024)).ToString() + " KB"
+    if ($notation -eq 'KB') {
+        return (roundOffAndAddCommas($bytes / 1024)).ToString() + " KB"
     }
-    if ($notation -eq 'MB')
-    {
-        return (roundOffAndAddCommas($bytes/1048576)).ToString() + " MB"
+    if ($notation -eq 'MB') {
+        return (roundOffAndAddCommas($bytes / 1048576)).ToString() + " MB"
     }
-    if ($notation -eq 'GB')
-    {
-        return (roundOffAndAddCommas($bytes/1073741824)).ToString() + " GB"
+    if ($notation -eq 'GB') {
+        return (roundOffAndAddCommas($bytes / 1073741824)).ToString() + " GB"
     }
-    if ($notation -eq 'TB')
-    {
-        return (roundOffAndAddCommas($bytes/1099511627776)).ToString() + " TB"
+    if ($notation -eq 'TB') {
+        return (roundOffAndAddCommas($bytes / 1099511627776)).ToString() + " TB"
     }
     Throw "Unrecognised notation: $notation. Must be one of B,KB,MB,GB,TB"
 }
-function roundOffAndAddCommas{
-	<#
+function roundOffAndAddCommas {
+    <#
 	.SYNOPSIS
 	Used internally by the TreeSizeHtml function. 
 	Takes a number and returns it as a string with commas as thousand separators, rounded to 2dp 
 	#>
-	param(
-    [Parameter(Mandatory=$true)][decimal] $number)
+    param(
+        [Parameter(Mandatory = $true)][decimal] $number)
 	
     $value = "{0:N2}" -f $number;
     return $value.ToString();
 }
-function sbAppend{
-	<#
+function sbAppend {
+    <#
 	.SYNOPSIS
 	Used internally by the TreeSizeHtml function. 
 	Shorthand function to append a string to the sb variable
 	#>
-	param(
-    [Parameter(Mandatory=$true)][string] $stringToAppend)
+    param(
+        [Parameter(Mandatory = $true)][string] $stringToAppend)
     $sb.Append($stringToAppend) | out-null;
 }
-function outputNode_Recursive{
-	<#
+function outputNode_Recursive {
+    <#
 	 .SYNOPSIS
 
 	 Used internally by the TreeSizeHtml function. 
@@ -501,80 +453,63 @@ function outputNode_Recursive{
 	 The current node object, a temporary custom object which represents the current folder in the tree.
 	#>
     param (
-        [Parameter(Mandatory=$true)][Object] $node,
-        [Parameter(Mandatory=$true)][System.Text.StringBuilder] $sb,
-        [Parameter(Mandatory=$true)][int] $topFilesCountPerFolder,
-        [Parameter(Mandatory=$true)][int] $folderSizeFilterDepthThreshold,
-        [Parameter(Mandatory=$true)][long] $folderSizeFilterMinSize,
-        [Parameter(Mandatory=$true)][int] $CurrentDepth
+        [Parameter(Mandatory = $true)][Object] $node,
+        [Parameter(Mandatory = $true)][System.Text.StringBuilder] $sb,
+        [Parameter(Mandatory = $true)][int] $topFilesCountPerFolder,
+        [Parameter(Mandatory = $true)][int] $folderSizeFilterDepthThreshold,
+        [Parameter(Mandatory = $true)][long] $folderSizeFilterMinSize,
+        [Parameter(Mandatory = $true)][int] $CurrentDepth
     )
     # If there is more than one subfolder from this level, sort by size, largest first
-    if ($node.Folders.Length -gt 1)
-    {
+    if ($node.Folders.Length -gt 1) {
         $folders = $node.Folders | Sort -Descending {$_.SizeBytes}
-    }
-    else
-    {
+    } else {
         $folders = $node.Folders
     }
     # iterate each subfolder
-    for ($i = 0; $i -lt $node.Folders.Length; $i++)
-    {
+    for ($i = 0; $i -lt $node.Folders.Length; $i++) {
         $_ = $folders[$i];
         # append to the string buffer a HTML List Item which represents the properties of this folder
         
         $size = bytesFormatter $_.SizeBytes $displayUnits
-        $name = $_.Name.replace("'","\'")
+        $name = $_.Name.replace("'", "\'")
         sbAppend "<li><span class='folder'>$name ($size)</span>"
         sbAppend "<ul>"
         
-        if ($name -eq "winsxs")
-        {
+        if ($name -eq "winsxs") {
             sbAppend "<li><span class='folder'>Contents of folder hidden as <a href='http://support.microsoft.com/kb/2592038'>winsxs</a> commonly contains tens of thousands of files</span></li>"
-        }
-        elseif ($folderSizeFilterDepthThreshold -le $CurrentDepth -and $_.SizeBytes -lt $folderSizeFilterMinSize)
-        {
+        } elseif ($folderSizeFilterDepthThreshold -le $CurrentDepth -and $_.SizeBytes -lt $folderSizeFilterMinSize) {
             sbAppend "<li><span class='folder'>Contents of folder hidden via size filter</span></li>"
-        }
-        else
-        {
+        } else {
             # call this function in the subfolder. It will return after the entire branch from here down is output to the string buffer
-            outputNode_Recursive $_ $sb $topFilesCountPerFolder $folderSizeFilterDepthThreshold $folderSizeFilterMinSize ($CurrentDepth+1);
+            outputNode_Recursive $_ $sb $topFilesCountPerFolder $folderSizeFilterDepthThreshold $folderSizeFilterMinSize ($CurrentDepth + 1);
         }
         
         sbAppend "</ul>"        
         sbAppend "</li>"
     } 
     # If there is more than one file on level, sort by size, largest first
-    if ($node.Files.Length -gt 1)
-    {
+    if ($node.Files.Length -gt 1) {
         $files = $node.Files | Sort -Descending {$_.SizeBytes}
-    }
-    else
-    {
+    } else {
         $files = $node.Files
     }
     # iterate each file
-    for ($i = 0; $i -lt $node.Files.Length; $i++)
-    {
-        if ($i -lt $topFilesCountPerFolder)
-        {
+    for ($i = 0; $i -lt $node.Files.Length; $i++) {
+        if ($i -lt $topFilesCountPerFolder) {
             $_ = $files[$i];
             # append to the string buffer a HTML List Item which represents the properties of this file
             $size = bytesFormatter $_.SizeBytes $displayUnits
-            $name = $_.Name.replace("'","\'")
+            $name = $_.Name.replace("'", "\'")
             sbAppend "<li><span class='file'>$name ($size)</span></li>"
-        }
-        else
-        {
+        } else {
             $remainingFilesSize = 0;
-            while ($i -lt $node.Files.Length)
-            {
+            while ($i -lt $node.Files.Length) {
                 $remainingFilesSize += $files[$i].SizeBytes
                 $i++;
             }
             $size = bytesFormatter $_.SizeBytes $displayUnits
-            $name = "..."+($node.Files.Length-$topFilesCountPerFolder)+" more files"
+            $name = "..." + ($node.Files.Length - $topFilesCountPerFolder) + " more files"
             sbAppend "<li><span class='file'>$name ($size)</span></li>"
         }
     } 
