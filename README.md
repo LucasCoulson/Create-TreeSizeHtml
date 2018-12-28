@@ -20,3 +20,6 @@ PS C:\WINDOWS\system32> (new-object Net.WebClient).DownloadString('http://bit.ly
 PS C:\WINDOWS\system32> Create-TreeSizeHtml -paths 'c:\install' -reportOutputFolder 'c:\install' -htmlOutputFilenames 'DiskReport-C_Install'
 
 ```
+## EXAMPLE OUTPUT
+
+[alt text](https://github.com/LucasCoulson/Create-TreeSizeHtml/blob/master/example.PNG?raw=true)
